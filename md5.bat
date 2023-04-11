@@ -1,235 +1,160 @@
 @echo off
-
 setlocal EnableDelayedExpansion
 
-set /A INIT_A=0x67452301
-set /A INIT_B=0xEFCDAB89
-set /A INIT_C=0x98BADCFE
-set /A INIT_D=0x10325476
-
-set /A SHIFT_AMTS[1]=7
-set /A SHIFT_AMTS[2]=12
-set /A SHIFT_AMTS[3]=17
-set /A SHIFT_AMTS[4]=22
-set /A SHIFT_AMTS[5]=5
-set /A SHIFT_AMTS[6]=9
-set /A SHIFT_AMTS[7]=14
-set /A SHIFT_AMTS[8]=20
-set /A SHIFT_AMTS[9]=4
-set /A SHIFT_AMTS[10]=11
-set /A SHIFT_AMTS[11]=16
-set /A SHIFT_AMTS[12]=23
-set /A SHIFT_AMTS[13]=6
-set /A SHIFT_AMTS[14]=10
-set /A SHIFT_AMTS[15]=15
-set /A SHIFT_AMTS[16]=21
-
-set /A TABLE_T[1]=0xd76aa478
-set /A TABLE_T[2]=0xe8c7b756
-set /A TABLE_T[3]=0x242070db
-set /A TABLE_T[4]=0xc1bdceee
-set /A TABLE_T[5]=0xf57c0faf
-set /A TABLE_T[6]=0x4787c62a
-set /A TABLE_T[7]=0xa8304613
-set /A TABLE_T[8]=0xfd469501
-set /A TABLE_T[9]=0x698098d8
-set /A TABLE_T[10]=0x8b44f7af
-set /A TABLE_T[11]=0xffff5bb1
-set /A TABLE_T[12]=0x895cd7be
-set /A TABLE_T[13]=0x6b901122
-set /A TABLE_T[14]=0xfd987193
-set /A TABLE_T[15]=0xa679438e
-set /A TABLE_T[16]=0x49b40821
-set /A TABLE_T[17]=0xf61e2562
-set /A TABLE_T[18]=0xc040b340
-set /A TABLE_T[19]=0x265e5a51
-set /A TABLE_T[20]=0xe9b6c7aa
-set /A TABLE_T[21]=0xd62f105d
-set /A TABLE_T[22]=0x02441453
-set /A TABLE_T[23]=0xd8a1e681
-set /A TABLE_T[24]=0xe7d3fbc8
-set /A TABLE_T[25]=0x21e1cde6
-set /A TABLE_T[26]=0xc33707d6
-set /A TABLE_T[27]=0xf4d50d87
-set /A TABLE_T[28]=0x455a14ed
-set /A TABLE_T[29]=0xa9e3e905
-set /A TABLE_T[30]=0xfcefa3f8
-set /A TABLE_T[31]=0x676f02d9
-set /A TABLE_T[32]=0x8d2a4c8a
-set /A TABLE_T[33]=0xfffa3942
-set /A TABLE_T[34]=0x8771f681
-set /A TABLE_T[35]=0x6d9d6122
-set /A TABLE_T[36]=0xfde5380c
-set /A TABLE_T[37]=0xa4beea44
-set /A TABLE_T[38]=0x4bdecfa9
-set /A TABLE_T[39]=0xf6bb4b60
-set /A TABLE_T[40]=0xbebfbc70
-set /A TABLE_T[41]=0x289b7ec6
-set /A TABLE_T[42]=0xeaa127fa
-set /A TABLE_T[43]=0xd4ef3085
-set /A TABLE_T[44]=0x04881d05
-set /A TABLE_T[45]=0xd9d4d039
-set /A TABLE_T[46]=0xe6db99e5
-set /A TABLE_T[47]=0x1fa27cf8
-set /A TABLE_T[48]=0xc4ac5665
-set /A TABLE_T[49]=0xf4292244
-set /A TABLE_T[50]=0x432aff97
-set /A TABLE_T[51]=0xab9423a7
-set /A TABLE_T[52]=0xfc93a039
-set /A TABLE_T[53]=0x655b59c3
-set /A TABLE_T[54]=0x8f0ccc92
-set /A TABLE_T[55]=0xffeff47d
-set /A TABLE_T[56]=0x85845dd1
-set /A TABLE_T[57]=0x6fa87e4f
-set /A TABLE_T[58]=0xfe2ce6e0
-set /A TABLE_T[59]=0xa3014314
-set /A TABLE_T[60]=0x4e0811a1
-set /A TABLE_T[61]=0xf7537e82
-set /A TABLE_T[62]=0xbd3af235
-set /A TABLE_T[63]=0x2ad7d2bb
-set /A TABLE_T[64]=0xeb86d391
-
-set fileName=%~1
-
-set messageLenBytes=%~z1
-echo messageLenBytes=%messageLenBytes%
-
-set /A numBlocks_1="messageLenBytes + 8"
-CALL :rfrs %numBlocks_1% 6 numBlocks_2
-set /A numBlocks="numBlocks_2 + 1"
-
-echo numBlocks=%numBlocks%
-set /a totalLen="numBlocks << 6"
-
-echo totalLen %totalLen%
-set /a paddingSize="totalLen - messageLenBytes"
-
-echo paddingSize %paddingSize%
-set /a paddingBytes[0]="-128"
-
-:: will not work for files greater than a size
-set /a messageLenBits="messageLenBytes << 3"
-echo messageLenBits=%messageLenBits%
-
-for /l %%m in (0,1,%paddingSize%) do (
-  set index=%%m
-  set "paddingBytes[!index!]=0"
-  )
-
-
-for /l %%m in (0,1,7) do (
-  set /a paddingIndex="paddingSize - 8 + %%m"
-  call :byte_cast !messageLenBits! castedByte
-  set /a "paddingBytes[!paddingIndex!]=!castedByte!"
-  call :rfrs !messageLenBits! 8 messageLenBitsShifted
-  set /a messageLenBits="!messageLenBitsShifted!"
-  )
-
-echo paddingBytes[40]=%paddingBytes[40]%
-echo paddingBytes[41]=%paddingBytes[41]%
-echo paddingBytes[42]=%paddingBytes[42]%
-echo paddingBytes[43]=%paddingBytes[43]%
-echo paddingBytes[44]=%paddingBytes[44]%
-echo paddingBytes[45]=%paddingBytes[45]%
-echo paddingBytes[46]=%paddingBytes[46]%
-echo paddingBytes[47]=%paddingBytes[47]%
-
-
-set a=%INIT_A%
-set b=%INIT_B%
-set c=%INIT_C%
-set d=%INIT_D%
-
-:: read a file and store the byte array data in message[index]
-
-set dummy="!temp!\md5batch%random%.txt"
-<nul >%dummy% set /p ".=A"
-set dummySize=1
-for /l %%n in (1,1,32) do (if !dummySize! lss %messageLenBytes% set /A "dummySize*=2" & type !dummy! >>!dummy!)
-set startOffset=0
-set endOffset=%messageLenBytes%
-set index=0
-set fileName="%~dpf1"
-set skipStart=1
-for /f "eol=F usebackq tokens=1,2 skip=1 delims=:[] " %%A in (`fc /b  "%fileName%" %dummy%`) do (
-    set /a skipEnd=0x%%A && (
-        if !skipEnd! geq %startOffset% if !skipStart! leq %endOffset% (
-        for /l %%n in (!skipStart!,1,!skipEnd!) do (
-          set /a "message[!index!]=0x41" 
-          set /a index+=1
-          )
-        set /a "message[!index!]=0x%%B" 
-        set /a index+=1
-        set /a skipStart=skipEnd+2
-      )
-    )
-  )
-  
-for /l %%n in (%skipStart%,1,%endOffset%) do (
-    set /a "message[!index!]=0x41" 
-    set /a index+=1
-    echo %message[!index!]%
-  )
-
-del %dummy%
-
-
-:: done reading
-
-set /a nblm1="numBlocks - 1"
-::for (int i = 0; i < numBlocks; i ++)
-for /l %%i in (0,1,nblm1) do ( 
-  set /a index="i << 6"
-  echo i = %%i, index = !index!
-  for /l %%j in (0,1,63) do (
-    set /a index="!index! + 1"
-    set /a j_rsh_2="%%j >> 2"
-    
-    ::echo !j_rsh_2!, !j!, j, %%j
-    echo index = !index!
-    echo messageLenBytes = !messageLenBytes!
-    echo j_rsh_2 = !j_rsh_2!
-    
-    if !index! LSS !messageLenBytes! (
-        rem this has no sense in batch, but it is what I wanted 
-        rem set /a "buffer[!j_rsh_2!]=%message[!index!]%" 
-        echo buffer[!j_rsh_2!]= %buffer[!j_rsh_2!]%
-      ) else (
-        echo buffer[!j_rsh_2!]= %buffer[!j_rsh_2!]%
-      )
-    
-    ) 
-  )
-
-GOTO :EOF
-for /l %%i in (0,1,15) do (
-    echo buffer[%%i]= %buffer[!i!]%
-    )
-
-GOTO :EOF
-
-:rfrs
-:: java's >>> 
-SET /A value=%~1
-SET /A moves=%~2
-SET /A usedIfNegative="(%value% >> 1 ) & 0x7fffffff"
-if %moves% LEQ 0 (
-    %~3=%value%
-) ELSE (
-    IF %value% GEQ 0 (
-        set /A %~3="value >> moves" 
-    ) ELSE (
-        set /A %~3="usedIfNegative >> (moves - 1)"
-    ) 
+:: Validar argumentos
+if "%~1" == "" (
+  echo Uso: %~nx0 [archivo]
+  exit /B 1
 )
-GOTO :EOF
 
-:byte_cast
-set /a x="%~1 & 0xff"
-set /a isNegative="x & 0x80"
-if %isNegative% GTR 0 (
-    set /a x="(-1)*((~(x - 1))&0xff)"
-    )
-set /a "%~2=x"
-exit /b
-goto :EOF
+:: Inicializar valores y funciones
+call :md5_init
+
+:: Leer el archivo y calcular la longitud en bytes y bits
+set "fileName=%~1"
+call :read_file
+
+:: Agregar relleno y dividir el mensaje en bloques
+call :padding_and_blocks
+
+:: Procesar cada bloque y calcular el hash MD5
+call :process_blocks
+
+:: Combinar los valores de hash y mostrar el hash MD5 final
+call :md5_final
+
+goto :eof
+
+:: Funciones
+:md5_init
+set /A F1=0, G1=1, H1=2, I1=3
+set /A INIT_A=0x67452301, INIT_B=0xEFCDAB89, INIT_C=0x98BADCFE, INIT_D=0x10325476
+set /A A=%INIT_A%, B=%INIT_B%, C=%INIT_C%, D=%INIT_D%
+
+:: Inicializar los valores de cambio y la tabla T
+for /L %%i in (1,1,64) do (
+  set /A "SHIFT_AMTS[%%i]=((%%i - 1) %% 4) * 5 + 1 + (%%i - 1) / 16 * 4"
+  set /A "TABLE_T[%%i]=floor(4294967296 * abs(sin(%%i)))"
+)
+goto :eof
+
+:read_file
+set "messageLenBytes=0"
+for /F "tokens=* usebackq" %%a in ("%fileName%") do (
+  set "line=%%a"
+  set "lineLen=0"
+  for /L %%i in (0,1,1000) do (
+    set "char=!line:~%%i,1!"
+    if not defined char goto :endOfLine
+    set /A "lineLen+=1"
+    set /A "byte=Asc("!char!")"
+    set /A "message[messageLenBytes++]=byte"
+  )
+  :endOfLine
+)
+goto :eof
+
+:padding_and_blocks
+set /A "messageLenBits=messageLenBytes * 8"
+set /A "numBlocks=(messageLenBits + 64) / 512 + 1"
+set /A "totalLen=numBlocks * 64"
+set /A "paddingSize=totalLen - messageLenBytes"
+
+for /L %%i in (1,1,%paddingSize%) do set "paddingBytes[%%i]=00"
+set "paddingBytes[1]=80"
+
+goto :eof
+
+:process_blocks
+set /A "nBlocks=messageLenBytes / 64"
+for /L %%i in (0,1,%nBlocks%) do (
+  for /L %%j in (0,4,60) do (
+    set /A "block[%%j]=message[%%i * 64 + %%j], block[%%j+1]=message[%%i * 64 + %%j + 1], block[%%j+2]=message[%%i * 64 + %%j + 2], block[%%j+3]=message[%%i * 64 + %%j + 3]"
+)
+
+for /L %%j in (0,1,15) do (
+set /A "M[%%j]=block[%%j * 4] + (block[%%j * 4 + 1] << 8) + (block[%%j * 4 + 2] << 16) + (block[%%j * 4 + 3] << 24)"
+)
+
+set /A "AA=A, BB=B, CC=C, DD=D"
+
+for /L %%j in (1,1,64) do (
+call :md5_round %%j
+)
+
+set /A "A=(A + AA) %% 4294967296, B=(B + BB) %% 4294967296, C=(C + CC) %% 4294967296, D=(D + DD) %% 4294967296"
+)
+goto :eof
+
+:md5_round
+set /A "round=%1"
+set /A "F=0, G=0"
+if !round! LSS 17 (
+set /A "F=(B & C) | ((~B) & D), G=round - 1"
+) else if !round! LSS 33 (
+set /A "F=(D & B) | ((~D) & C), G=(5 * round + 1) %% 16"
+) else if !round! LSS 49 (
+set /A "F=B ^ C ^ D, G=(3 * round + 5) %% 16"
+) else (
+set /A "F=C ^ (B | (~D)), G=(7 * round) %% 16"
+)
+
+set /A "TEMP=D, D=C, C=B"
+set /A "B=B + (((A + F + TABLE_T[round] + M[G]) << SHIFT_AMTS[round]) | ((A + F + TABLE_T[round] + M[G]) >> (32 - SHIFT_AMTS[round])))"
+set /A "B=B %% 4294967296"
+set /A "A=TEMP"
+goto :eof
+
+:md5_final
+set "MD5=%A%"
+call :int32_to_hex8 B
+set "MD5=%MD5%%HEX8%"
+call :int32_to_hex8 C
+set "MD5=%MD5%%HEX8%"
+call :int32_to_hex8 D
+set "MD5=%MD5%%HEX8%"
+
+echo MD5: %MD5%
+goto :eof
+
+:int32_to_hex8
+set /A "value=%1, highByte=(value >> 16) & 0xFFFF, lowByte=value & 0xFFFF"
+set /A "highHighNibble=(highByte >> 12) & 0xF, highLowNibble=(highByte >> 8) & 0xF, lowHighNibble=(highByte) & 0xF, lowLowNibble=(highByte << 4) >> 12"
+call :hex_nibble_to_char highHighNibble
+set "HEX8=%char%"
+call :hex_nibble_to_char highLowNibble
+set "HEX8=%HEX8%%char%"
+call :hex_nibble_to_char lowHighNibble
+set "HEX8=%HEX8%%char%"
+call :hex_nibble_to_char lowLowNibble
+set "HEX8=%HEX8%%char%"
+
+set /A "highHighNibble=(lowByte >> 12) & 0xF, highLowNibble=(lowByte >> 8) & 0xF, lowHighNibble=(lowByte) & 0xF, lowLowNibble=(lowByte << 4) >> 12"
+call :hex_nibble_to_char highHighNibble
+set "HEX8=%HEX8%%char%"
+call :hex_nibble_to_char highLowNibble
+set "HEX8=%HEX8%%char%"
+call :hex_nibble_to_char lowHighNibble
+set "HEX8=%HEX8%%char%"
+call :hex_nibble_to_char lowLowNibble
+set "HEX8=%HEX8%%char%"
+goto :eof
+
+:hex_nibble_to_char
+if %1 EQU 0 set "char=0" & goto :eof
+if %1 EQU 1 set "char=1" & goto :eof
+if %1 EQU 2 set "char=2" & goto :eof
+if %1 EQU 3 set "char=3" & goto :eof
+if %1 EQU 4 set "char=4" & goto :eof
+if %1 EQU 5 set "char=5" & goto :eof
+if %1 EQU 6 set "char=6" & goto :eof
+if %1 EQU 7 set "char=7" & goto :eof
+if %1 EQU 8 set "char=8" & goto :eof
+if %1 EQU 9 set "char=9" & goto :eof
+if %1 EQU 10 set "char=A" & goto :eof
+if %1 EQU 11 set "char=B" & goto :eof
+if %1 EQU 12 set "char=C" & goto :eof
+if %1 EQU 13 set "char=D" & goto :eof
+if %1 EQU 14 set "char=E" & goto :eof
+if %1 EQU 15 set "char=F" & goto :eof
+goto :eof
